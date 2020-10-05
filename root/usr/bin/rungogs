@@ -11,4 +11,4 @@ export NSS_WRAPPER_PASSWD=${HOME}/passwd
 export NSS_WRAPPER_GROUP=/etc/group
 export PORT=3000
 
-/usr/bin/gogs run web
+/usr/bin/gogs web
