@@ -32,6 +32,7 @@ LABEL name="Gogs - Go Git Service" \
 ENV HOME=/var/lib/gogs
 ENV GOGS_HOME=${HOME}
 ENV GOGS_CUSTOM=/etc/gogs
+ENV GOGS_WORK_DIR=${GOGS_HOME}
 ENV USER=gogs
 
 COPY ./root/usr /usr
@@ -43,8 +44,11 @@ COPY ./root/usr /usr
 #     yum -y clean all && \
 #     mkdir -p /var/lib/gogs
 RUN dnf -y --setopt=tsflags=nodocs install nss_wrapper \
-           git \
-    && \
+      git \
+      procps-ng \
+      iputils \
+      curl \
+      && \
     dnf clean all
 
 RUN mkdir -p \
