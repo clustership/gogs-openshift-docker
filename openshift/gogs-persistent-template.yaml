@@ -27,30 +27,33 @@ objects:
       port: 5432
       targetPort: 5432
     selector:
-      name: ${APPLICATION_NAME}-postgresql
-- kind: DeploymentConfig
-  apiVersion: v1
+      app: ${APPLICATION_NAME}-postgresql
+- kind: Deployment
+  apiVersion: apps/v1
   metadata:
     annotations:
       description: Defines how to deploy the database
+      image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"postgresql:${DATABASE_VERSION}","namespace": "openshift"},"fieldPath":"spec.template.spec.containers[?(@.name==\"postgresql\")].image"}]'
     name: ${APPLICATION_NAME}-postgresql
     labels:
       app: ${APPLICATION_NAME}
   spec:
     replicas: 1
     selector:
-      name: ${APPLICATION_NAME}-postgresql
+      matchLabels:
+        app: ${APPLICATION_NAME}-postgresql
     strategy:
       type: Recreate
     template:
       metadata:
         labels:
-          name: ${APPLICATION_NAME}-postgresql
+          app: ${APPLICATION_NAME}-postgresql
         name: ${APPLICATION_NAME}-postgresql
       spec:
         serviceAccountName: ${APPLICATION_NAME}
         containers:
-        - env:
+        - image: ' '
+          env:
           - name: POSTGRESQL_USER
             value: ${DATABASE_USER}
           - name: POSTGRESQL_PASSWORD
@@ -63,7 +66,6 @@ objects:
             value: ${DATABASE_SHARED_BUFFERS}
           - name: POSTGRESQL_ADMIN_PASSWORD
             value: ${DATABASE_ADMIN_PASSWORD}
-          image: ' '
           livenessProbe:
             initialDelaySeconds: 30
             tcpSocket:
@@ -94,17 +96,6 @@ objects:
         - name: gogs-postgres-data
           persistentVolumeClaim:
             claimName: gogs-postgres-data
-    triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - postgresql
-        from:
-          kind: ImageStreamTag
-          name: postgresql:${DATABASE_VERSION}
-          namespace: openshift
-      type: ImageChange
-    - type: ConfigChange
 - kind: Service
   apiVersion: v1
   metadata:
@@ -122,7 +113,6 @@ objects:
       targetPort: 3000
     selector:
       app: ${APPLICATION_NAME}
-      deploymentconfig: ${APPLICATION_NAME}
     sessionAffinity: None
     type: ClusterIP
   status:
@@ -165,7 +155,6 @@ objects:
         creationTimestamp: null
         labels:
           app: ${APPLICATION_NAME}
-          deploymentconfig: ${APPLICATION_NAME}
       spec:
         serviceAccountName: ${APPLICATION_NAME}
         containers:
@@ -337,7 +326,7 @@ parameters:
 - name: GOGS_VERSION
   displayName: Gogs Version
   description: 'Version of the Gogs container image to be used (check the available version https://hub.docker.com/r/openshiftdemos/gogs/tags)'
-  value: "0.12.1"
+  value: "0.12.2"
   required: true
 - name: INSTALL_LOCK
   displayName: Installation lock
